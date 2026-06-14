@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moonwalk Trivia - Michael Jackson Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0907;
+            --surface-color: #1a150e;
+            --surface-light: #262016;
+            --gold-primary: #d4af37;
+            --gold-secondary: #f3e5ab;
+            --gold-glow: rgba(212, 175, 55, 0.3);
+            --gold-glow-strong: rgba(212, 175, 55, 0.6);
+            --text-primary: #fcfbf9;
+            --text-secondary: #b5a999;
+            --correct-color: #2e7d32;
+            --incorrect-color: #c62828;
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(26, 21, 14, 0.6) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Ambient subtle gold dust effect */
+        .ambient-dust {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: radial-gradient(circle, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            z-index: -1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .gold-logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 16px var(--gold-glow));
+            transform: scale(1);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .gold-logo:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: transparent;
+            background: linear-gradient(135deg, var(--gold-secondary) 0%, var(--gold-primary) 50%, #8a6f27 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        main {
+            width: 100%;
+            max-width: 650px;
+            background: var(--surface-color);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: var(--border-radius);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(212, 175, 55, 0.05);
+            padding: 30px;
+            position: relative;
+            animation: scaleIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        /* Section classes */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* 1. ERA SELECTOR */
+        .era-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .era-card {
+            background: linear-gradient(145deg, var(--surface-light) 0%, rgba(26, 20, 14, 0.9) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .era-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--gold-primary);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+        }
+
+        .era-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .era-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .era-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .era-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.25rem;
+            color: var(--gold-secondary);
+            font-weight: 600;
+        }
+
+        .era-badge {
+            background: var(--gold-primary);
+            color: var(--bg-color);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .era-desc {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .era-progress {
+            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .era-progress-bar {
+            background: linear-gradient(90deg, var(--gold-primary), var(--gold-secondary));
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* 2. QUIZ CONTAINER */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .back-button {
+            background: none;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--gold-secondary);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-button:hover {
+            background: var(--gold-primary);
+            color: var(--bg-color);
+            border-color: var(--gold-primary);
+        }
+
+        .quiz-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-item {
+            background: var(--surface-light);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-icon {
+            color: var(--gold-primary);
+        }
+
+        .question-box {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            line-height: 1.5;
+            background: var(--surface-light);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--gold-primary);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background: rgba(26, 20, 14, 0.8);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: var(--border-radius);
+            color: var(--text-primary);
+            padding: 16px 20px;
+            text-align: left;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: var(--surface-light);
+            border-color: var(--gold-primary);
+            transform: translateX(4px);
+            box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        .option-btn.selected {
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .option-btn.correct {
+            background: rgba(46, 125, 50, 0.15) !important;
+            border-color: var(--correct-color) !important;
+            color: #81c784;
+        }
+
+        .option-btn.incorrect {
+            background: rgba(198, 40, 40, 0.15) !important;
+            border-color: var(--incorrect-color) !important;
+            color: #e57373;
+        }
+
+        .feedback-symbol {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .explanation-box {
+            background: rgba(212, 175, 55, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 25px;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .explanation-title {
+            color: var(--gold-secondary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .explanation-text {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .action-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .gold-action-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #b2902b 100%);
+            border: none;
+            border-radius: 30px;
+            color: #0b0907;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 12px 30px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .gold-action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+            background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 100%);
+        }
+
+        .gold-action-btn:active {
+            transform: translateY(1px);
+        }
+
+        .gold-action-btn:disabled {
+            background: var(--surface-light);
+            color: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* 3. RESULTS/CELEBRATION SCREEN */
+        .results-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 10px 0;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--surface-light) 0%, var(--surface-color) 100%);
+            border: 3px solid var(--gold-primary);
+            box-shadow: 0 0 25px var(--gold-glow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .score-num {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--gold-secondary);
+        }
+
+        .score-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: -4px;
+        }
+
+        .badge-unlock {
+            background: linear-gradient(145deg, #262016 0%, #1a150e 100%);
+            border: 2px dashed var(--gold-primary);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            width: 100%;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: borderSparkle 2s infinite alternate;
+        }
+
+        .badge-graphics {
+            font-size: 3.5rem;
+            filter: drop-shadow(0 0 12px var(--gold-primary));
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        .badge-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold-secondary);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .badge-message {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            max-width: 80%;
+            font-weight: 300;
+        }
+
+        /* 4. APK COMPANION SECTION */
+        .companion-card {
+            margin-top: 35px;
+            background: #110e0a;
+            border-top: 3px solid var(--gold-primary);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .companion-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: var(--gold-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .companion-text {
+            color: var(--text-secondary);
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        .download-btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .download-btn {
+            background: none;
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-secondary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 12px 25px;
+            border-radius: 25px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+        }
+
+        .download-btn:hover {
+            background: var(--gold-primary);
+            color: #0b0907;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .instructions-list {
+            margin-top: 10px;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        .instructions-list li {
+            list-style-type: decimal;
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(181, 169, 153, 0.5);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Keyframes */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes borderSparkle {
+            from { border-color: rgba(212, 175, 55, 0.25); }
+            to { border-color: rgba(212, 175, 55, 0.85); }
+        }
+
+        @keyframes pulse {
+            from { transform: scale(0.95); filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
+            to { transform: scale(1.05); filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.8)); }
+        }
+
+        /* Custom progress utility */
+        .progress-indicator {
+            height: 4px;
+            width: 100%;
+            background-color: var(--surface-light);
+            border-radius: 2px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress-indicator-fill {
+            height: 100%;
+            background-color: var(--gold-primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-dust"></div>
+
+    <header>
+        <!-- Gold Crescent / Moonwalker Logo Representation -->
+        <svg class="gold-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5C25.1472 5 5 25.1472 5 50C5 74.8528 25.1472 95 50 95C74.8528 95 95 74.8528 95 50C95 44.5 94.1 39.2 92.4 34.3C90.5 39.2 86 42.7 80.6 42.7C73.4 42.7 67.6 36.9 67.6 29.7C67.6 24.3 71.1 19.8 76 17.9C71.1 16.2 65.8 15.3 60.3 15.3C54.8 15.3 49.5 16.2 44.6 17.9C49.5 19.8 53 24.3 53 29.7C53 36.9 47.2 42.7 40 42.7C34.6 42.7 30.1 39.2 28.2 34.3C26.5 39.2 25.6 44.5 25.6 50C25.6 63.5 36.5 74.4 50 74.4C63.5 74.4 74.4 63.5 74.4 50C74.4 44.5 72.6 39.4 69.6 35.3C77.4 37.9 83 45.3 83 54C83 72.2 68.2 87 50 87C31.8 87 17 72.2 17 54C17 41.5 23.9 30.6 34.1 25C31.5 20.3 30 14.8 30 9C30 7.6 30.1 6.3 30.4 5C36.3 5 41.8 6.5 46.5 9.1C44.9 14.8 46.5 21 50.7 25.2C54.9 21 56.5 14.8 54.9 9.1C59.6 6.5 65.1 5 71 5C71.3 6.3 71.4 7.6 71.4 9C71.4 14.8 69.9 20.3 67.3 25C77.5 30.6 84.4 41.5 84.4 54C84.4 61.2 81.6 67.7 77 72.5C72.5 77.1 66.1 80 59 80C42.4 80 29 66.6 29 50C29 41.4 32.6 33.6 38.4 28.1C35.4 32.2 33.6 37.3 33.6 42.8C33.6 53.4 42.2 62 52.8 62C63.4 62 72 53.4 72 42.8C72 37.3 70.2 32.2 67.2 28.1C73 33.6 76.6 41.4 76.6 50C76.6 64.7 64.7 76.6 50 76.6C35.3 76.6 23.4 64.7 23.4 50C23.4 44.5 25.1 39.4 28.1 35.3C21.1 39.4 16.4 47.1 16.4 56C16.4 70.9 28.5 83 43.4 83C58.3 83 70.4 70.9 70.4 56C70.4 47.1 65.7 39.4 58.7 35.3C61.7 39.4 63.4 44.5 63.4 50C63.4 57.4 57.4 63.4 50 63.4C42.6 63.4 36.6 57.4 36.6 50C36.6 44.5 38.3 39.4 41.3 35.3C35.5 39.4 31.8 46.3 31.8 54C31.8 64 39.9 72.1 49.9 72.1C59.9 72.1 68 64 68 54C68 46.3 64.3 39.4 58.5 35.3C61.5 39.4 63.2 44.5 63.2 50C63.2 57.3 57.3 63.2 50 63.2C42.7 63.2 36.8 57.3 36.8 50C36.8 44.5 38.5 39.4 41.5 35.3C35.7 39.4 32 46.3 32 54C32 63.9 40.1 72 50 72C59.9 72 68 63.9 68 54C68 46.3 64.3 39.4 58.5 35.3M50 0C77.6142 0 100 22.3858 100 50C100 77.6142 77.6142 100 50 100C22.3858 100 0 77.6142 0 50C0 22.3858 22.3858 0 50 0Z" fill="url(#goldGrad)" />
+            <defs>
+                <linearGradient id="goldGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#fff4d0" />
+                    <stop offset="50%" stop-color="#d4af37" />
+                    <stop offset="100%" stop-color="#8c6c1b" />
+                </linearGradient>
+            </defs>
+        </svg>
+        <h1>Moonwalk Trivia</h1>
+        <div class="subtitle">The Ultimate Michael Jackson Quiz</div>
+    </header>
+
+    <main>
+        <!-- 1. ERA SELECTION CONTENT -->
+        <section id="era-screen" class="screen active">
+            <h2 style="font-family: 'Cinzel', serif; font-size: 1.3rem; margin-bottom: 5px; color: var(--gold-secondary); text-align: center;">Select Your Era</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 25px; font-weight: 300;">Choose a historic music period of the King of Pop to test your mastery.</p>
+
+            <div class="era-list">
+                <!-- Early Era -->
+                <div class="era-card" onclick="startQuiz('early')">
+                    <div class="era-header">
+                        <span class="era-title">The Early J5 & Motown Era</span>
+                        <span class="era-badge">Amateur</span>
+                    </div>
+                    <p class="era-desc">From Gary Steeltown records, the explosive Motown Jackson 5 debut, through the creative liberation of Off the Wall.</p>
+                    <div class="era-progress">
+                        <div class="era-progress-bar" id="progress-early"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>Best Score</span>
+                        <span id="score-text-early">0 / 15 (0%)</span>
+                    </div>
+                </div>
+
+                <!-- 80s Era -->
+                <div class="era-card" onclick="startQuiz('eighties')">
+                    <div class="era-header">
+                        <span class="era-title">The 80s Thriller & Bad Era</span>
+                        <span class="era-badge">Medium</span>
+                    </div>
+                    <p class="era-desc">The multi-track secrets of Thriller, landmark Grammy sweeps, patented gravity tilts, and Scorsese's legendary Bad subway short film.</p>
+                    <div class="era-progress">
+                        <div class="era-progress-bar" id="progress-eighties"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>Best Score</span>
+                        <span id="score-text-eighties">0 / 15 (0%)</span>
+                    </div>
+                </div>
+
+                <!-- Legacy Era -->
+                <div class="era-card" onclick="startQuiz('legacy')">
+                    <div class="era-header">
+                        <span class="era-title">The Legacy & Onwards Era</span>
+                        <span class="era-badge">Expert</span>
+                    </div>
+                    <p class="era-desc">Mark Ryden's complex Dangerous portraits, high-budget Scream spacecraft duets, environmental Earth Song, and classic Invincible hooks.</p>
+                    <div class="era-progress">
+                        <div class="era-progress-bar" id="progress-legacy"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>Best Score</span>
+                        <span id="score-text-legacy">0 / 15 (0%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APK Companion Download Segment -->
+            <div class="companion-card">
+                <div class="companion-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+                    </svg>
+                    Android APK Companion
+                </div>
+                <p class="companion-text">
+                    Take the absolute full experience with you! You can download the native Android app right here to your phone and unlock all 72 categories, custom badges, local high scores, and stunning live particle animations.
+                </p>
+                <div class="download-btn-container">
+                    <a href="app/build/outputs/apk/debug/app-debug.apk" class="download-btn" download>
+                        Download Android App (.APK)
+                    </a>
+                </div>
+                <div style="margin-top: 10px;">
+                    <p class="companion-text" style="font-weight: 500; font-size: 0.8rem; color: var(--gold-secondary);">How to Install on Phone:</p>
+                    <ol class="instructions-list">
+                        <li>Tap the **Download Android App (.APK)** button above in your phone browser.</li>
+                        <li>Once downloaded, open the `.apk` file from your notification bar or downloads folder.</li>
+                        <li>If prompted, enable "Allow installation from this source" in your settings.</li>
+                        <li>Tap **Install** and you're ready to play!</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. ACTIVE QUIZ CONTENT SCREEN -->
+        <section id="quiz-screen" class="screen">
+            <div class="quiz-header">
+                <button class="back-button" onclick="quitQuiz()">Quit Quiz</button>
+                <div class="quiz-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">🔥</span>
+                        <span id="streak-count">Streak: 0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">✨</span>
+                        <span id="score-count">Score: 0/15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Horizontal Progress Bar -->
+            <div class="progress-indicator">
+                <div class="progress-indicator-fill" id="question-progress-bar"></div>
+            </div>
+
+            <div style="font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px; font-weight: 600;" id="question-num-header">
+                Question 1 of 15
+            </div>
+
+            <!-- Question container -->
+            <div class="question-box" id="question-text">
+                Loading question...
+            </div>
+
+            <!-- Options buttons list -->
+            <div class="options-list" id="options-container">
+                <!-- Javascript will inject options here -->
+            </div>
+
+            <!-- Pop up explanation container after answering -->
+            <div class="explanation-box" id="explanation-container">
+                <div class="explanation-title" id="explanation-title">Explanation</div>
+                <p class="explanation-text" id="explanation-text">
+                    Explanation text...
+                </p>
+            </div>
+
+            <div class="action-container">
+                <button class="gold-action-btn" id="next-btn" onclick="goToNextQuestion()" disabled>Next Question</button>
+            </div>
+        </section>
+
+        <!-- 3. RESULTS/CELEBRATION SCREEN -->
+        <section id="result-screen" class="screen">
+            <div class="results-box">
+                <h2 style="font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--gold-secondary); margin-bottom: 12px; text-transform: uppercase;">Quiz Completed!</h2>
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 25px; max-width: 80%; font-weight: 300;" id="result-greeting">
+                    Spectacular effort! Let's see how much trivia you mastered.
+                </p>
+
+                <div class="score-circle">
+                    <div class="score-num" id="result-score-ratio">12/15</div>
+                    <div class="score-label">Correct</div>
+                </div>
+
+                <div class="badge-unlock" id="badge-display">
+                    <div class="badge-graphics">👑</div>
+                    <div class="badge-title">Moonwalk Master Badge</div>
+                    <div class="badge-message">
+                        You scored 80% or higher and unlocked the premium gold Moonwalk badge for this era!
+                    </div>
+                </div>
+
+                <button class="gold-action-btn" onclick="showEraSelection()" style="width: 100%; max-width: 320px; border-radius: 30px;">
+                    Return to Era Selection
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Moonwalk Trivia App &bull; Sophisticated Black & Gold Edition
+    </footer>
+
+    <script>
+        // Full database of 45 historic questions
+        const quizDatabase = {
+            early: [
+                {
+                    id: 11,
+                    text: "In which year did The Jackson 5 release their breakthrough Motown debut single 'I Want You Back'?",
+                    options: ["1968", "1969", "1970", "1971"],
+                    correctIndex: 1,
+                    explanation: "Released in October 1969, 'I Want You Back' became the band's first national #1 hit and went on to sell millions of copies worldwide."
+                },
+                {
+                    id: 12,
+                    text: "Before signing with Motown in 1968, what local independent record label did The Jackson 5 record for in Indiana?",
+                    options: ["Sun Records", "Steeltown Records", "Chess Records", "Vee-Jay Records"],
+                    correctIndex: 1,
+                    explanation: "In Gary, Indiana, the family group first signed with Steeltown Records in late 1967 and recorded their absolute earliest tracks."
+                },
+                {
+                    id: 13,
+                    text: "In which Midwestern city was Michael Jackson born, and raised alongside his brothers and sisters?",
+                    options: ["Detroit, MI", "Gary, IN", "Chicago, IL", "Cleveland, OH"],
+                    correctIndex: 1,
+                    explanation: "Michael Jackson was born on August 29, 1958, in the steel-mill city of Gary, Indiana, moving the family to California after J5 signed with Motown."
+                },
+                {
+                    id: 14,
+                    text: "The Jackson 5 made history when their first four consecutive Motown singles hit #1 on the US Billboard charts. Which of these is NOT one of those four?",
+                    options: ["ABC", "The Love You Save", "I'll Be There", "Dancing Machine"],
+                    correctIndex: 3,
+                    explanation: "The first four #1s were 'I Want You Back', 'ABC', 'The Love You Save', and 'I'll Be There'. 'Dancing Machine' came later in 1973, reaching #2."
+                },
+                {
+                    id: 15,
+                    text: "Michael's first solo #1 hit single was released in 1972 under Motown Records. What friendly creature was this track named after?",
+                    options: ["A parrot named Rockin' Robin", "A pet rat named Ben", "A chimpanzee named Bubbles", "A black dog named Charlie"],
+                    correctIndex: 1,
+                    explanation: "'Ben', a beautiful ballad about a pet rat from the 1972 thriller movie, became Michael's first solo #1 hit on the Billboard Hot 100 at age 14."
+                },
+                {
+                    id: 16,
+                    text: "Which legendary singer-songwriter took credit for 'discovering' The Jackson 5 and served as a crucial early mentor?",
+                    options: ["Aretha Franklin", "Diana Ross", "Gladys Knight", "Etta James"],
+                    correctIndex: 1,
+                    explanation: "Motown historically promoted Diana Ross as J5's primary discoverer. She hosted them at her home in Los Angeles and introduced them to the public."
+                },
+                {
+                    id: 17,
+                    text: "Which 1978 musical film saw Michael co-star alongside Diana Ross, playing the physical role of the Scarecrow?",
+                    options: ["The Wiz", "West Side Story", "Hair", "Cabaret"],
+                    correctIndex: 0,
+                    explanation: "Michael played the Scarecrow in Sidney Lumet's 'The Wiz', an African-American adaptation of The Wizard of Oz. It was here he met Quincy Jones."
+                },
+                {
+                    id: 18,
+                    text: "Which legendary master record producer did Michael meet on the set of 'The Wiz' and hire to construct his solo albums?",
+                    options: ["Berry Gordy", "Clive Davis", "Quincy Jones", "Rick Rubin"],
+                    correctIndex: 2,
+                    explanation: "Quincy Jones was the musical director of 'The Wiz'. After Michael asked him for references, Quincy offered to produce his next solo album himself."
+                },
+                {
+                    id: 19,
+                    text: "Who wrote the smooth-tempo disco ballad single 'Rock with You' from the historic 1979 album 'Off the Wall'?",
+                    options: ["Michael Jackson", "Rod Temperton", "Quincy Jones", "Paul McCartney"],
+                    correctIndex: 1,
+                    explanation: "Rod Temperton, former keyboardist of the soul-funk band Heatwave, wrote both 'Rock with You' and the later classic title song 'Thriller'."
+                },
+                {
+                    id: 20,
+                    text: "What was the official energetic lead single off the landmark 1979 solo album 'Off the Wall'?",
+                    options: ["Rock with You", "Don't Stop 'Til You Get Enough", "Off the Wall", "She's Out of My Life"],
+                    correctIndex: 1,
+                    explanation: "'Don't Stop 'Til You Get Enough' was the first single, showcasing Michael's signature high falsetto and raw percussion using soda bottles."
+                },
+                {
+                    id: 21,
+                    text: "Which heart-wrenching ballad from 'Off the Wall' famously ends with Michael sobbing in emotional distress during the final takes?",
+                    options: ["Girlfriend", "She's Out of My Life", "I Can't Help It", "It's the Falling in Love"],
+                    correctIndex: 1,
+                    explanation: "Michael Jackson was so deeply connected to the lyrics of 'She's Out of My Life' that he burst into real tears at the end of every recording take."
+                },
+                {
+                    id: 22,
+                    text: "Who was the executive director and founder of Motown Records who signed J5 to their first major national recording contract?",
+                    options: ["Sam Cooke", "Berry Gordy", "Al Bell", "Ahmet Ertegun"],
+                    correctIndex: 1,
+                    explanation: "Berry Gordy founded Motown in Detroit. He signed J5 in 1968, housing them in California and supervising their legendary arrangements."
+                },
+                {
+                    id: 23,
+                    text: "In 1976, J5 moved from Motown to Epic Records and changed their name. What was their new name due to trademark restrictions?",
+                    options: ["The Jacksons", "The Gary Brothers", "Jackson Pride", "Michael & Brothers"],
+                    correctIndex: 0,
+                    explanation: "Motown owned the name 'The Jackson 5'. When the group moved to Epic, they had to legally change their name to 'The Jacksons' without Jermaine."
+                },
+                {
+                    id: 24,
+                    text: "Which self-produced 1978 Jacksons album saw Michael and his brothers establish full creative control over their musical output?",
+                    options: ["Destiny", "Triumph", "Victory", "Goin' Places"],
+                    correctIndex: 0,
+                    explanation: "Released in late 1978, 'Destiny' was written and produced entirely by the brothers themselves, containing the massive dance anthem 'Shake Your Body'."
+                },
+                {
+                    id: 25,
+                    text: "What was the name of the oldest Jackson brother who initially formed the 'Jackson Brothers' trio before Michael joined?",
+                    options: ["Tito", "Jackie", "Jermaine", "Marlon"],
+                    correctIndex: 1,
+                    explanation: "Jackie Jackson was the oldest brother who, alongside Tito and Jermaine, formed the original group in 1964. Michael joined later."
+                }
+            ],
+            eighties: [
+                {
+                    id: 31,
+                    text: "Exactly how many non-consecutive weeks did the historic 1982 album 'Thriller' spend at #1 on the US Billboard 200?",
+                    options: ["28 weeks", "32 weeks", "37 weeks", "40 weeks"],
+                    correctIndex: 2,
+                    explanation: "'Thriller' spent an outstanding, record-breaking 37 weeks at #1, establishing a record for solo recording artists that remains unbroken."
+                },
+                {
+                    id: 32,
+                    text: "Who performed the iconic horror voice-over narration and dramatic evil laugh at the end of the song 'Thriller'?",
+                    options: ["Christopher Lee", "Vincent Price", "Boris Karloff", "Bela Lugosi"],
+                    correctIndex: 1,
+                    explanation: "The grand master of horror Vincent Price recorded the memorable final voice-over and theatrical laughter in only two takes."
+                },
+                {
+                    id: 33,
+                    text: "Which rock guitar legend performed the blistering, impromptu guitar solo in Michael's hit song 'Beat It'?",
+                    options: ["Eddie Van Halen", "Slash", "Steve Lukather", "Eric Clapton"],
+                    correctIndex: 0,
+                    explanation: "Eddie Van Halen played the legendary solo for free as a personal favor. His heavy amplifier caught on fire during the studio sessions!"
+                },
+                {
+                    id: 34,
+                    text: "During which historic 1983 televised special did Michael Jackson introduce his legendary Moonwalk dance to the world?",
+                    options: ["The 25th Annual Grammy Awards", "Motown 25: Yesterday, Today, Forever", "MTV Video Music Awards", "American Music Awards"],
+                    correctIndex: 1,
+                    explanation: "Michael performed 'Billie Jean' on March 25, 1983 for Motown 25, delivering the Moonwalk to a historic viewer audience of 47 million people."
+                },
+                {
+                    id: 35,
+                    text: "In 'Smooth Criminal', exactly how many degrees of gravity-defying tilt do Michael and his backup dancers accomplish in unison?",
+                    options: ["30 degrees", "45 degrees", "55 degrees", "60 degrees"],
+                    correctIndex: 1,
+                    explanation: "Using custom patented mechanical shoes, the performers lean forward at a physics-defying 45-degree angle without falling over."
+                },
+                {
+                    id: 36,
+                    text: "What was the unique physical invention co-patented by Michael Jackson to permit the 45-degree lean during live tours?",
+                    options: ["Built-in steel toe springboards", "A system of strong magnets", "Slotted heels that lock onto stage pegs", "Retractable ankle wires"],
+                    correctIndex: 2,
+                    explanation: "Michael co-patented a mechanism (US Patent 5,255,452) where stage pegs slide into custom-cut slots in the performers' heels on cue."
+                },
+                {
+                    id: 37,
+                    text: "What was the color scheme of the iconic zippered jacket designed by Deborah Landis for the 'Thriller' short film?",
+                    options: ["Black with gold zippers", "Bright red with black V-shaped strips", "Silver metallic with red trim", "Blue satin with white stripes"],
+                    correctIndex: 1,
+                    explanation: "The bright candy-red jacket was custom created with bold black lines so that Michael would stand out cleanly against the zombie crowd."
+                },
+                {
+                    id: 38,
+                    text: "Setting a single-night world record, exactly how many Grammy trophies did Michael sweep during the 1984 Grammy Awards?",
+                    options: ["Five Awards", "Seven Awards", "Eight Awards", "Nine Awards"],
+                    correctIndex: 2,
+                    explanation: "Michael won a historic eight Grammys on February 28, 1984, including Album of the Year for Thriller, the most ever won in a single night."
+                },
+                {
+                    id: 39,
+                    text: "In the 'Smooth Criminal' music video, which 1930s-inspired vintage color theme was chosen for Michael's famous suit?",
+                    options: ["Yellow suit with red tie", "White chalk-stripe suit and blue armband", "Red leather suit with silver studs", "Solid black suit with golden sash"],
+                    correctIndex: 1,
+                    explanation: "Inspired by Fred Astaire, Michael wore a customized double-breasted white suit, a blue sleeve armband, and a white fedora with blue band."
+                },
+                {
+                    id: 40,
+                    text: "Which legendary songwriters wrote 'Man in the Mirror', the gospel-driven #1 hit from the Bad album?",
+                    options: ["Michael Jackson & Quincy Jones", "Rod Temperton", "Siedah Garrett & Glen Ballard", "Stevie Wonder"],
+                    correctIndex: 2,
+                    explanation: "Siedah Garrett and Glen Ballard wrote the song, with backing vocals provided by Garrett and the monumental Andrae Crouch Choir."
+                },
+                {
+                    id: 41,
+                    text: "Which rock guitar specialist provided the raw, energetic guitar lead in the theatrical rock ballad 'Dirty Diana'?",
+                    options: ["Eddie Van Halen", "Steve Stevens", "Slash", "Joe Perry"],
+                    correctIndex: 1,
+                    explanation: "Steve Stevens, famous for his work with Billy Idol, contributed the hard-hitting heavy metal guitar solos to match Michael's raw passion."
+                },
+                {
+                    id: 42,
+                    text: "To achieve the perfect, legendary bass-heavy mix on 'Billie Jean', sound engineer Bruce Swedien did how many separate mix takes?",
+                    options: ["4 times", "25 times", "50 times", "91 times"],
+                    correctIndex: 3,
+                    explanation: "Bruce Swedien completed 91 mixes! Ultimately, Michael loved mix number 2, which was selected for the final master pressed on vinyl."
+                },
+                {
+                    id: 43,
+                    text: "What was the skin condition Michael was diagnosed with in the mid-1980s, which led him to wear makeup and his signature medical tape?",
+                    options: ["Vitiligo", "Lupus", "Psoriasis", "Albinism"],
+                    correctIndex: 0,
+                    explanation: "Michael was diagnosed with Vitiligo, an autoimmune condition causing patchy loss of pigmentation, leading him to protect and blend his skin."
+                },
+                {
+                    id: 44,
+                    text: "What was the first music video by an African-American artist to receive heavy rotation on the newly-launched MTV channel?",
+                    options: ["Rock with You", "Billie Jean", "Beat It", "Thriller"],
+                    correctIndex: 1,
+                    explanation: "The high visual quality and massive popularity of 'Billie Jean' officially broke down racial barriers at MTV, paving the way for future black artists."
+                },
+                {
+                    id: 45,
+                    text: "Which legendary Scorsese-directed 18-minute short film was set in a Brooklyn subway station and co-starred a young Wesley Snipes?",
+                    options: ["Thriller", "Bad", "Beat It", "Speed Demon"],
+                    correctIndex: 1,
+                    explanation: "Martin Scorsese directed 'Bad' as a gritty musical street film. Co-starring Wesley Snipes, it became an instant visual triumph."
+                }
+            ],
+            legacy: [
+                {
+                    id: 51,
+                    text: "Which famous surrealist canvas artist created the incredibly dense, masking-themed painting for the cover of 'Dangerous' (1991)?",
+                    options: ["Andy Warhol", "Keith Haring", "Mark Ryden", "Salvador Dali"],
+                    correctIndex: 2,
+                    explanation: "The majestic cover art was painted by the master of pop surrealism, Mark Ryden. It took him over six detail-oriented months to complete."
+                },
+                {
+                    id: 52,
+                    text: "The 1991 video of 'Black or White' famously pioneered which digital visual effects technology during its global-unity climax?",
+                    options: ["Green screen keying", "Digital Face Morphing", "Bullet time slowdown", "3D CGI Wireframing"],
+                    correctIndex: 1,
+                    explanation: "The final minutes showing diverse people seamlessly morphing into each other was a historical breakthrough for digital face morphing technology."
+                },
+                {
+                    id: 53,
+                    text: "Set in Ancient Egypt, which music video features cameos from Magic Johnson, Eddie Murphy, and Iman?",
+                    options: ["Remember the Time", "In the Closet", "Jam", "Will You Be There"],
+                    correctIndex: 0,
+                    explanation: "John Singleton directed the epic 'Remember the Time' video set in Pharaoh Ramses' palace, introducing ground-breaking Egyptian steps."
+                },
+                {
+                    id: 54,
+                    text: "Which beautiful supermodel played the lead female dancer in the sandy, high-contrast, desert-themed video of 'In the Closet'?",
+                    options: ["Cindy Crawford", "Naomi Campbell", "Tyra Banks", "Iman"],
+                    correctIndex: 1,
+                    explanation: "Naomi Campbell performed alongside Michael in the sensual, sepia-toned desert video directed by celebrity photographer Herb Ritts."
+                },
+                {
+                    id: 55,
+                    text: "Setting a world-record for the most expensive music video ever made at $7 million, 'Scream' was a sci-fi duet with which sibling?",
+                    options: ["Jermaine Jackson", "La Toya Jackson", "Janet Jackson", "Rebbie Jackson"],
+                    correctIndex: 2,
+                    explanation: "Directed by Mark Romanek, the futuristic black-and-white video featured Michael and Janet Jackson venting in a spacecraft, costing a historic $7M."
+                },
+                {
+                    id: 56,
+                    text: "Michael's epic environmental statement 'Earth Song' featured spectacular visuals. On tour, how did he elevate above the stage?",
+                    options: ["Via rocket jetpack packs", "Suspended on a rising crane/scaffolding bridging the fans", "In a floating metallic saucer", "By mechanical wire levitation"],
+                    correctIndex: 1,
+                    explanation: "Michael performed the climax of 'Earth Song' on a scissor-jack crane that reached out over the front rows, symbolizing global warning."
+                },
+                {
+                    id: 57,
+                    text: "In 1993, Michael stood frozen on a capsule elevator for two full minutes before initiating which massive televised showcase?",
+                    options: ["Grammy Awards 1993", "Super Bowl XXVII Halftime Show", "MTV Movie Awards 10th Anniversary", "Soul Train Heritage Awards"],
+                    correctIndex: 1,
+                    explanation: "Michael's historic Super Bowl Halftime performance revolutionized modern sports television, attracting the highest ratings in history."
+                },
+                {
+                    id: 58,
+                    text: "Which legendary screen actor provided the dramatic spoken conversation at the introduction of Michael's 2001 hit 'You Rock My World'?",
+                    options: ["Robert De Niro", "Marlon Brando", "Al Pacino", "Paul Newman"],
+                    correctIndex: 1,
+                    explanation: "The legendary Marlon Brando, a close personal friend of Michael, recorded the cinematic spoken intro for the short film."
+                },
+                {
+                    id: 59,
+                    text: "In which historic city did Michael film the raw, controversial, street-unity video of 'They Don't Care About Us' featuring Olodum drummers?",
+                    options: ["New York City, USA", "Rio de Janeiro, Brazil", "Moscow, Russia", "Johannesburg, South Africa"],
+                    correctIndex: 1,
+                    explanation: "Directed by Spike Lee, 'They Don't Care About Us' was filmed in the Dona Marta favela of Rio de Janeiro, with local Olodum percussion groups."
+                },
+                {
+                    id: 60,
+                    text: "What was the title of the massive 50-show residency in London's O2 Arena that Michael was preparing for in 2009?",
+                    options: ["The Final Curtain", "King of Pop Forever", "This Is It", "Legacy Live"],
+                    correctIndex: 2,
+                    explanation: "'This Is It' was scheduled to launch in July 2009. Michael's final rehearsal recordings were transformed into a historic documentary film."
+                },
+                {
+                    id: 61,
+                    text: "Which 1997 studio collection holds the world record as the best-selling remix album of all time, selling over 6 million copies?",
+                    options: ["Blood on the Dance Floor: HIStory in the Mix", "Michael Jackson Remixes", "Dangerous Reloaded", "Invincible Remix Volume 1"],
+                    correctIndex: 0,
+                    explanation: "'Blood on the Dance Floor' remains the undisputed king of remix albums, showcasing five fresh tracks and eight historical remixes."
+                },
+                {
+                    id: 62,
+                    text: "Michael's angelic tracking 'Will You Be There' was the cinematic main theme song of which heartwarming 1993 film?",
+                    options: ["E.T. the Extra-Terrestrial", "Free Willy", "The Lion King", "Homeward Bound"],
+                    correctIndex: 1,
+                    explanation: "'Will You Be There', featuring the Cleveland Orchestra, became the signature anthem of the movie 'Free Willy', winning an MTV Movie Award."
+                },
+                {
+                    id: 63,
+                    text: "What was the name of Michael's final completed full-length studio album, released in August 2001?",
+                    options: ["Dangerous", "HIStory: Past, Present and Future", "Invincible", "Xscape"],
+                    correctIndex: 2,
+                    explanation: "Michael's final studio release was 'Invincible' in late 2001, featuring state-of-the-art production and the hit 'You Rock My World'."
+                },
+                {
+                    id: 64,
+                    text: "Which legendary guitar specialist collaborated with Michael on 'Give In To Me' and live on his 1992 Dangerous World Tour?",
+                    options: ["Eddie Van Halen", "Slash", "Steve Stevens", "Carlos Santana"],
+                    correctIndex: 1,
+                    explanation: "Slash of Guns N' Roses recorded massive guitar tracking for both 'Give In To Me' and 'Black or White', performing them live with Michael."
+                },
+                {
+                    id: 65,
+                    text: "Released posthumously in 2014, which album saw Michael's archive vocals modernized by producer Timbaland?",
+                    options: ["Michael", "Xscape", "Immortal", "Scream 2014"],
+                    correctIndex: 1,
+                    explanation: "'Xscape', curated by LA Reid and modernized by Timbaland, StarGate, and Rodney Jerkins, produced the global hit 'Love Never Felt So Good'."
+                }
+            ]
+        };
+
+        // Current active state
+        let currentEra = '';
+        let currentQuestions = [];
+        let curQuestionIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let selectedOptionIdx = -1;
+
+        // On document load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+        });
+
+        // 1. Progress Management with Local Storage
+        function loadProgress() {
+            const eras = ['early', 'eighties', 'legacy'];
+            eras.forEach(era => {
+                const bestScore = localStorage.getItem(`score_${era}`) || 0;
+                const percentage = Math.round((bestScore / 15) * 100);
+                
+                // Update text
+                document.getElementById(`score-text-${era}`).innerText = `${bestScore} / 15 (${percentage}%)`;
+                
+                // Update bar
+                document.getElementById(`progress-${era}`).style.width = `${percentage}%`;
+            });
+        }
+
+        function saveProgress(era, newScore) {
+            const existingScore = parseInt(localStorage.getItem(`score_${era}`)) || 0;
+            if (newScore > existingScore) {
+                localStorage.setItem(`score_${era}`, newScore);
+            }
+            loadProgress();
+        }
+
+        // 2. Navigation Flow
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showEraSelection() {
+            showScreen('era-screen');
+        }
+
+        function startQuiz(era) {
+            currentEra = era;
+            // Clones the database questions to avoid mutations
+            currentQuestions = JSON.parse(JSON.stringify(quizDatabase[era]));
+            curQuestionIndex = 0;
+            score = 0;
+            streak = 0;
+            selectedOptionIdx = -1;
+
+            document.getElementById('next-btn').disabled = true;
+            document.getElementById('explanation-container').style.display = 'none';
+
+            updateHeaderStats();
+            loadQuestion();
+            showScreen('quiz-screen');
+        }
+
+        function quitQuiz() {
+            if (confirm('Are you sure you want to stop the quiz? Your current progress will not be saved.')) {
+                showEraSelection();
+            }
+        }
+
+        // 3. Quiz Gameplay Logic
+        function updateHeaderStats() {
+            document.getElementById('streak-count').innerText = `Streak: ${streak}`;
+            document.getElementById('score-count').innerText = `Score: ${score}/${currentQuestions.length}`;
+            
+            // Bar progress indicator
+            const progressPercent = Math.round((curQuestionIndex / currentQuestions.length) * 100);
+            document.getElementById('question-progress-bar').style.width = `${progressPercent}%`;
+            document.getElementById('question-num-header').innerText = `Question ${curQuestionIndex + 1} of ${currentQuestions.length}`;
+        }
+
+        function loadQuestion() {
+            const questionData = currentQuestions[curQuestionIndex];
+            document.getElementById('question-text').innerText = questionData.text;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = ''; // Clear previous
+
+            questionData.options.forEach((optionTxt, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerHTML = `
+                    <span>${optionTxt}</span>
+                    <span class="feedback-symbol" id="symbol-${index}"></span>
+                `;
+                button.onclick = () => selectOption(index);
+                optionsContainer.appendChild(button);
+            });
+
+            // Reset UI components
+            selectedOptionIdx = -1;
+            document.getElementById('next-btn').disabled = true;
+            document.getElementById('next-btn').innerText = (curQuestionIndex === currentQuestions.length - 1) ? "Finish Quiz" : "Next Question";
+            document.getElementById('explanation-container').style.display = 'none';
+        }
+
+        function selectOption(index) {
+            if (selectedOptionIdx !== -1) return; // Answer already lock validated
+
+            selectedOptionIdx = index;
+            const questionData = currentQuestions[curQuestionIndex];
+            const isCorrect = (index === questionData.correctIndex);
+
+            // Handle stats
+            if (isCorrect) {
+                score++;
+                streak++;
+            } else {
+                streak = 0;
+            }
+            updateHeaderStats();
+
+            // Style buttons to reflect correct/incorrect answers
+            const optionButtons = document.querySelectorAll('.option-btn');
+            optionButtons.forEach((btn, idx) => {
+                btn.disabled = true; // Protect from secondary inputs
+                
+                if (idx === questionData.correctIndex) {
+                    btn.classList.add('correct');
+                    btn.querySelector('.feedback-symbol').innerText = '✓';
+                } else if (idx === selectedOptionIdx) {
+                    btn.classList.add('incorrect');
+                    btn.querySelector('.feedback-symbol').innerText = '✗';
+                }
+            });
+
+            // Populate and show explanation field
+            document.getElementById('explanation-text').innerText = questionData.explanation;
+            document.getElementById('explanation-container').style.display = 'block';
+
+            // Enable next question progression
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        function goToNextQuestion() {
+            if (curQuestionIndex < currentQuestions.length - 1) {
+                curQuestionIndex++;
+                updateHeaderStats();
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        // 4. End Quiz & Show Unlocks
+        function finishQuiz() {
+            saveProgress(currentEra, score);
+
+            // Ratio summary Text
+            document.getElementById('result-score-ratio').innerText = `${score}/15`;
+
+            const scorePercent = (score / 15) * 100;
+            let greeting = '';
+            let badgeTitle = '';
+            let badgeGraphic = '👑';
+            let badgeMessage = '';
+
+            // Setup Badge graphics & descriptions based on Era + Score Performance
+            if (scorePercent >= 80) {
+                greeting = "Astounding performance! You have displayed absolute encyclopedic mastery over the King of Pop's history!";
+                badgeMessage = "Unlocked for scoring 80% or greater on this period. You are an official Moonwalker Pioneer!";
+                
+                if (currentEra === 'early') {
+                    badgeTitle = "Motown Spark Gold Badge";
+                    badgeGraphic = "⭐";
+                } else if (currentEra === 'eighties') {
+                    badgeTitle = "Moonwalk Majesty Badge";
+                    badgeGraphic = "🎩";
+                } else {
+                    badgeTitle = "HIStory Pioneer Crest";
+                    badgeGraphic = "📀";
+                }
+                document.getElementById('badge-display').style.display = 'flex';
+            } else {
+                greeting = "Superb attempt! Play again or review some trivia to hit the 80% mark and unlock the premium gold era badges.";
+                document.getElementById('badge-display').style.display = 'none';
+            }
+
+            document.getElementById('result-greeting').innerText = greeting;
+            if (badgeTitle !== '') {
+                document.getElementById('badge-display').querySelector('.badge-graphics').innerText = badgeGraphic;
+                document.getElementById('badge-display').querySelector('.badge-title').innerText = badgeTitle;
+                document.getElementById('badge-display').querySelector('.badge-message').innerText = badgeMessage;
+            }
+
+            showScreen('result-screen');
+        }
+    </script>
+</body>
+</html>
