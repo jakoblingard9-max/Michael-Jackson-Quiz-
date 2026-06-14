@@ -264,10 +264,36 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            transition: all 0.3s ease;
         }
 
         .stat-icon {
             color: var(--gold-primary);
+        }
+
+        @keyframes streak-pulse {
+            0% {
+                transform: scale(1);
+                background: var(--surface-light);
+                border-color: rgba(212, 175, 55, 0.1);
+                box-shadow: none;
+            }
+            30% {
+                transform: scale(1.18);
+                background: rgba(212, 175, 55, 0.2);
+                border-color: var(--gold-primary);
+                box-shadow: 0 0 12px rgba(212, 175, 55, 0.45);
+            }
+            100% {
+                transform: scale(1);
+                background: var(--surface-light);
+                border-color: rgba(212, 175, 55, 0.1);
+                box-shadow: none;
+            }
+        }
+
+        .animate-pulse-streak {
+            animation: streak-pulse 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .question-box {
@@ -871,7 +897,7 @@
             <div class="quiz-header">
                 <button class="back-button" onclick="quitQuiz()">Quit Quiz</button>
                 <div class="quiz-stats">
-                    <div class="stat-item">
+                    <div class="stat-item" id="streak-stat-item">
                         <span class="stat-icon">🔥</span>
                         <span id="streak-count">Streak: 0</span>
                     </div>
@@ -1280,6 +1306,121 @@
         let streak = 0;
         let selectedOptionIdx = -1;
 
+        // Web Audio API Synthesizer
+        const audioSynth = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playCorrect() {
+                try {
+                    this.init();
+                    const ctx = this.ctx;
+                    if (ctx.state === 'suspended') ctx.resume();
+                    
+                    const t = ctx.currentTime;
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+                        
+                        gain.gain.setValueAtTime(0, t + idx * 0.08);
+                        gain.gain.linearRampToValueAtTime(0.12, t + idx * 0.08 + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.25);
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.start(t + idx * 0.08);
+                        osc.stop(t + idx * 0.08 + 0.3);
+                    });
+                } catch (e) {
+                    console.error("Audio error", e);
+                }
+            },
+            playIncorrect() {
+                try {
+                    this.init();
+                    const ctx = this.ctx;
+                    if (ctx.state === 'suspended') ctx.resume();
+                    
+                    const t = ctx.currentTime;
+                    const o1 = ctx.createOscillator();
+                    const o2 = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    o1.type = 'sawtooth';
+                    o1.frequency.setValueAtTime(180, t);
+                    
+                    o2.type = 'sine';
+                    o2.frequency.setValueAtTime(175, t);
+                    
+                    gain.gain.setValueAtTime(0.12, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                    
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(300, t);
+                    filter.Q.setValueAtTime(1, t);
+                    
+                    o1.connect(filter);
+                    o2.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    o1.start(t);
+                    o2.start(t);
+                    o1.stop(t + 0.4);
+                    o2.stop(t + 0.4);
+                } catch (e) {
+                    console.error("Audio error", e);
+                }
+            },
+            playCelebration() {
+                try {
+                    this.init();
+                    const ctx = this.ctx;
+                    if (ctx.state === 'suspended') ctx.resume();
+                    
+                    const t = ctx.currentTime;
+                    const rootNotes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+                    
+                    rootNotes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, t + idx * 0.1);
+                        gain.gain.setValueAtTime(0, t + idx * 0.1);
+                        gain.gain.linearRampToValueAtTime(0.1, t + idx * 0.1 + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.1 + 0.6);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(t + idx * 0.1);
+                        osc.stop(t + idx * 0.1 + 0.7);
+
+                        const oscHarm = ctx.createOscillator();
+                        const gainHarm = ctx.createGain();
+                        oscHarm.type = 'triangle';
+                        oscHarm.frequency.setValueAtTime(freq * 1.5, t + idx * 0.1 + 0.05);
+                        gainHarm.gain.setValueAtTime(0, t + idx * 0.1 + 0.05);
+                        gainHarm.gain.linearRampToValueAtTime(0.04, t + idx * 0.1 + 0.08);
+                        gainHarm.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.1 + 0.5);
+                        oscHarm.connect(gainHarm);
+                        gainHarm.connect(ctx.destination);
+                        oscHarm.start(t + idx * 0.1 + 0.05);
+                        oscHarm.stop(t + idx * 0.1 + 0.6);
+                    });
+                } catch (e) {
+                    console.error("Audio error", e);
+                }
+            }
+        };
+
         // On document load
         document.addEventListener('DOMContentLoaded', () => {
             loadProgress();
@@ -1390,8 +1531,18 @@
             if (isCorrect) {
                 score++;
                 streak++;
+                audioSynth.playCorrect();
+                
+                // Trigger subtle streak pulse animation
+                const streakItem = document.getElementById('streak-stat-item');
+                if (streakItem) {
+                    streakItem.classList.remove('animate-pulse-streak');
+                    void streakItem.offsetWidth; // Force reflow
+                    streakItem.classList.add('animate-pulse-streak');
+                }
             } else {
                 streak = 0;
+                audioSynth.playIncorrect();
             }
             updateHeaderStats();
 
@@ -1429,6 +1580,9 @@
 
         // 4. End Quiz & Show Unlocks
         function finishQuiz() {
+            try {
+                audioSynth.playCelebration();
+            } catch (e) {}
             saveProgress(currentEra, score);
 
             // Ratio summary Text
@@ -1470,6 +1624,128 @@
 
             showScreen('result-screen');
         }
+    </script>
+    <script>
+        // Dynamic Gold Glitter Sparkle System
+        (function() {
+            const container = document.querySelector('.ambient-dust');
+            if (!container) return;
+
+            // Create a styled canvas inside the container
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.pointerEvents = 'none';
+            container.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const particleCount = 45;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class GlitterParticle {
+                constructor() {
+                    this.reset();
+                    // Start randomly scattered vertically initially
+                    this.y = Math.random() * canvas.height;
+                }
+
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = canvas.height + 20; // reset to bottom
+                    this.size = Math.random() * 2.5 + 1; // 1px to 3.5px
+                    this.speedY = Math.random() * 0.4 + 0.15; // float slow
+                    this.speedX = (Math.random() - 0.5) * 0.15; // horizontal sway
+                    this.twinkleSpeed = Math.random() * 0.03 + 0.01;
+                    this.alpha = Math.random();
+                    this.growing = Math.random() > 0.5;
+                    this.type = Math.floor(Math.random() * 3); // 0: soft circle, 1: four-point spark, 2: diamond
+                }
+
+                update() {
+                    this.y -= this.speedY;
+                    this.x += this.speedX + Math.sin(this.y * 0.01 + this.size) * 0.08;
+
+                    if (this.growing) {
+                        this.alpha += this.twinkleSpeed;
+                        if (this.alpha >= 1) {
+                            this.alpha = 1;
+                            this.growing = false;
+                        }
+                    } else {
+                        this.alpha -= this.twinkleSpeed;
+                        if (this.alpha <= 0.1) {
+                            this.alpha = 0.1;
+                            this.growing = true;
+                        }
+                    }
+
+                    if (this.y < -20 || this.x < -20 || this.x > canvas.width + 20) {
+                        this.reset();
+                    }
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fillStyle = "#d4af37";
+                    ctx.shadowBlur = this.size * 2.5;
+                    ctx.shadowColor = "#fff4d0";
+
+                    if (this.type === 0) {
+                        // Soft glow circle
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (this.type === 1) {
+                        // Four-point starburst
+                        const size = this.size * 2.2;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y - size);
+                        ctx.quadraticCurveTo(this.x, this.y, this.x + size, this.y);
+                        ctx.quadraticCurveTo(this.x, this.y, this.x, this.y + size);
+                        ctx.quadraticCurveTo(this.x, this.y, this.x - size, this.y);
+                        ctx.quadraticCurveTo(this.x, this.y, this.x, this.y - size);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        // Sparkling diamond
+                        const size = this.size * 1.8;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y - size);
+                        ctx.lineTo(this.x + size * 0.65, this.y);
+                        ctx.lineTo(this.x, this.y + size);
+                        ctx.lineTo(this.x - size * 0.65, this.y);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                }
+            }
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new GlitterParticle());
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
     </script>
 </body>
 </html>

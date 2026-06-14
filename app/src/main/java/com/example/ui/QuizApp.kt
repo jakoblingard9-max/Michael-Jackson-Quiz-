@@ -12,6 +12,11 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.EaseInQuart
 import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -102,6 +107,8 @@ fun QuizApp(
             .fillMaxSize()
             .background(VelvetBlackBackground)
     ) {
+        GoldGlitterBackground()
+
         AnimatedContent(
             targetState = screenState,
             transitionSpec = {
@@ -2394,3 +2401,111 @@ fun ShinyGoldSignatureLogo(
         }
     }
 }
+
+@Composable
+fun GoldGlitterBackground(modifier: Modifier = Modifier) {
+    // Keep a stable list of particles so they are not recreated on every recomposition
+    val particles = remember {
+        List(45) {
+            GlitterParticle(
+                x = Math.random().toFloat(),
+                y = Math.random().toFloat(),
+                size = (1.5f + Math.random().toFloat() * 2.5f),
+                speed = (0.012f + Math.random().toFloat() * 0.048f).toFloat(),
+                twinkleDelay = (Math.random().toFloat() * 1000f).toLong(),
+                shapeType = (0..2).random()
+            )
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "Glitter")
+    val animValue by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "FloatingGlitter"
+    )
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val width = size.width
+        val height = size.height
+
+        particles.forEach { particle ->
+            // Let the particle drift gently with a wrapping modulo
+            val yPos = ((particle.y - animValue * particle.speed) % 1.0f + 1.0f) % 1.0f * height
+            val xPos = ((particle.x + Math.sin((animValue * 2 * Math.PI) + particle.x * 10f) * 0.015f) % 1.0f + 1.0f) % 1.0f * width
+
+            // Golden pulsate sequence
+            val pulse = (Math.sin((animValue * 6 * Math.PI) + particle.twinkleDelay.toDouble()) + 1.0) / 2.0
+            val alpha = (0.25f + pulse * 0.75f).toFloat()
+
+            val goldColor = Color(0xFFD4AF37)
+            val highlightColor = Color(0xFFFFFBD6)
+
+            when (particle.shapeType) {
+                0 -> { // Glowing orb
+                    drawCircle(
+                        color = goldColor,
+                        radius = particle.size.dp.toPx() * 1.5f,
+                        center = androidx.compose.ui.geometry.Offset(xPos.toFloat(), yPos.toFloat()),
+                        alpha = alpha * 0.35f
+                    )
+                    drawCircle(
+                        color = highlightColor,
+                        radius = particle.size.dp.toPx() * 0.6f,
+                        center = androidx.compose.ui.geometry.Offset(xPos.toFloat(), yPos.toFloat()),
+                        alpha = alpha * 0.9f
+                    )
+                }
+                1 -> { // 4-pointed sparkle star
+                    val pSize = particle.size.dp.toPx() * 2.2f
+                    val path = Path().apply {
+                        moveTo(xPos.toFloat(), (yPos - pSize).toFloat())
+                        quadraticTo(xPos.toFloat(), yPos.toFloat(), (xPos + pSize).toFloat(), yPos.toFloat())
+                        quadraticTo(xPos.toFloat(), yPos.toFloat(), xPos.toFloat(), (yPos + pSize).toFloat())
+                        quadraticTo(xPos.toFloat(), yPos.toFloat(), (xPos - pSize).toFloat(), yPos.toFloat())
+                        quadraticTo(xPos.toFloat(), yPos.toFloat(), xPos.toFloat(), (yPos - pSize).toFloat())
+                    }
+                    drawPath(
+                        path = path,
+                        color = goldColor,
+                        alpha = alpha
+                    )
+                    drawCircle(
+                        color = highlightColor,
+                        radius = particle.size.dp.toPx() * 0.4f,
+                        center = androidx.compose.ui.geometry.Offset(xPos.toFloat(), yPos.toFloat()),
+                        alpha = alpha
+                    )
+                }
+                else -> { // Tiny luxury sparkling diamond
+                    val pSize = particle.size.dp.toPx() * 1.8f
+                    val path = Path().apply {
+                        moveTo(xPos.toFloat(), (yPos - pSize).toFloat())
+                        lineTo((xPos + pSize * 0.65f).toFloat(), yPos.toFloat())
+                        lineTo(xPos.toFloat(), (yPos + pSize).toFloat())
+                        lineTo((xPos - pSize * 0.65f).toFloat(), yPos.toFloat())
+                        close()
+                    }
+                    drawPath(
+                        path = path,
+                        color = highlightColor,
+                        alpha = alpha * 0.85f
+                    )
+                }
+            }
+        }
+    }
+}
+
+private data class GlitterParticle(
+    val x: Float,
+    val y: Float,
+    val size: Float,
+    val speed: Float,
+    val twinkleDelay: Long,
+    val shapeType: Int
+)

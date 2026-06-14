@@ -179,6 +179,9 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
                 _correctAnswersCount.value += 1
                 // Add points: base points of 100 per correct answer
                 _points.value += 100
+                AudioSynthesizer.playCorrect()
+            } else {
+                AudioSynthesizer.playIncorrect()
             }
         }
     }
@@ -194,6 +197,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             // End of quiz - Save to database
             _quizCompleted.value = true
+            AudioSynthesizer.playCelebration()
             saveQuizResult()
         }
     }
