@@ -1,5 +1,10 @@
 package com.example.ui
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.animateContentSize
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -13,6 +18,9 @@ import androidx.compose.animation.core.EaseInQuart
 import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -688,6 +696,74 @@ fun QuizCenterScreen(
             }
         }
 
+        // "Thriller Chrono Dash" Toggle banner
+        item {
+            val isTimedMode by viewModel.isTimedMode.collectAsStateWithLifecycle()
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(CharcoalSurface)
+                    .border(
+                        BorderStroke(
+                            1.dp, 
+                            if (isTimedMode) GoldPrimary else CharcoalBorder
+                        ), 
+                        RoundedCornerShape(16.dp)
+                    )
+                    .clickable { viewModel.setTimedMode(!isTimedMode) }
+                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(if (isTimedMode) GoldPrimary.copy(alpha = 0.15f) else Color(0x11FFFFFF)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "⏱️",
+                            fontSize = 18.sp,
+                            color = if (isTimedMode) GoldPrimary else MutedText
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "THRILLER CHRONO DASH",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isTimedMode) GoldPrimary else PureWhite,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "15 seconds per question limit! Exciting pulse gameplay.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OffWhite.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+                Switch(
+                    checked = isTimedMode,
+                    onCheckedChange = { viewModel.setTimedMode(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = VelvetBlackBackground,
+                        checkedTrackColor = GoldPrimary,
+                        uncheckedThumbColor = MutedText,
+                        uncheckedTrackColor = Color(0x22FFFFFF)
+                    ),
+                    modifier = Modifier.testTag("chrono_mode_switch")
+                )
+            }
+        }
+
         // Section tab choices: 'Early Era', '80s Pop Icon', 'Legacy'
         item {
             Column(
@@ -1160,6 +1236,133 @@ data class QuoteItem(
 )
 
 @Composable
+fun VinylFactFlipperCard() {
+    val facts = remember {
+        listOf(
+            "Quincy Jones wanted to cut Billie Jean's intro, but Michael insisted: 'It makes me want to dance. When that intro plays, that's why I want to listen.'",
+            "Michael Jackson recorded all his lead vocals for 'Don't Stop 'Til You Get Enough' into a plastic water bottle to create a unique acoustic echo.",
+            "The iconic gravity-defying lean in 'Smooth Criminal' was achieved using patented shoes that locked into hidden pegs rising from the stage.",
+            "To record the backing vocals of 'P.Y.T. (Pretty Young Thing)', Michael had his sisters Janet & La Toya Jackson join him in the studio.",
+            "Martin Scorsese directed the 18-minute 'Bad' film on location in a Brooklyn subway station over a span of several weeks.",
+            "Vincent Price's spooky laugh in 'Thriller' was completed in only two takes. Quincey Jones was stunned by his perfect timing."
+        )
+    }
+    
+    var factIndex by remember { mutableStateOf(0) }
+    var isSpinning by remember { mutableStateOf(false) }
+    
+    val infiniteTransition = rememberInfiniteTransition(label = "VinylSpin")
+    val rotationAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (isSpinning) 800 else 8000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "Rotation"
+    )
+    
+    val currentFact = facts[factIndex]
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(CharcoalSurface)
+            .border(BorderStroke(1.dp, GoldPrimary.copy(alpha = 0.3f)), RoundedCornerShape(24.dp))
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "RETRO LINER NOTES",
+            style = MaterialTheme.typography.labelSmall,
+            color = GoldTertiary,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp
+        )
+        Text(
+            text = "Tap the gold record to spin and reveal a studio secret!",
+            style = MaterialTheme.typography.bodySmall,
+            color = MutedText,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+        )
+        
+        // Spinning Gold Vinyl Disk
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clickable {
+                    if (!isSpinning) {
+                        isSpinning = true
+                        coroutineScope.launch {
+                            delay(1200)
+                            factIndex = (factIndex + 1) % facts.size
+                            isSpinning = false
+                            AudioSynthesizer.playCorrect()
+                        }
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(rotationZ = rotationAngle)
+            ) {
+                // outer vinyl circle
+                drawCircle(
+                    color = Color(0xFF151515),
+                    radius = size.minDimension / 2f
+                )
+                // grooves
+                for (r in 1..4) {
+                    drawCircle(
+                        color = Color(0xFF2E2E2E),
+                        radius = (size.minDimension / 2f) * (1f - r * 0.15f),
+                        style = Stroke(width = 1.dp.toPx())
+                    )
+                }
+                // Gold label center
+                drawCircle(
+                    color = GoldPrimary,
+                    radius = size.minDimension * 0.18f
+                )
+                // Center spindle hole
+                drawCircle(
+                    color = VelvetBlackBackground,
+                    radius = size.minDimension * 0.05f
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0x11FFFFFF))
+                .padding(12.dp)
+                .animateContentSize()
+        ) {
+            Text(
+                text = currentFact,
+                style = TextStyle(
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                    color = OffWhite,
+                    textAlign = TextAlign.Center
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
 fun QuotesScreen() {
     val quotesList = remember {
         listOf(
@@ -1306,6 +1509,11 @@ fun QuotesScreen() {
             }
         }
 
+        // RETRO STUDIO LINER NOTES FACT CARD
+        item {
+            VinylFactFlipperCard()
+        }
+
         // 2. COMPLETE LIBRARY TEXT HEAD
         item {
             Text(
@@ -1372,10 +1580,29 @@ fun QuizContentScreen(
     val points by viewModel.points.collectAsStateWithLifecycle()
     val correctCount by viewModel.correctAnswersCount.collectAsStateWithLifecycle()
     val isPaused by viewModel.isPaused.collectAsStateWithLifecycle()
+    val isTimedMode by viewModel.isTimedMode.collectAsStateWithLifecycle()
+    val timeLeft by viewModel.timeLeft.collectAsStateWithLifecycle()
 
     val currentQuestion = category.questions[currentIndex]
     val totalQuestions = category.questions.size
     val progress = (currentIndex + 1).toFloat() / totalQuestions.toFloat()
+
+    var pulseTrigger by remember { mutableStateOf(1f) }
+    LaunchedEffect(correctCount) {
+        if (correctCount > 0) {
+            pulseTrigger = 1.35f
+            delay(120)
+            pulseTrigger = 1f
+        }
+    }
+    val scoreScale by animateFloatAsState(
+        targetValue = pulseTrigger,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "scorePulse"
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -1464,6 +1691,10 @@ fun QuizContentScreen(
                             // Current Score container
                             Box(
                                 modifier = Modifier
+                                    .graphicsLayer {
+                                        scaleX = scoreScale
+                                        scaleY = scoreScale
+                                    }
                                     .size(40.dp)
                                     .clip(CircleShape)
                                     .background(GoldPrimary),
@@ -1523,6 +1754,49 @@ fun QuizContentScreen(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
+                }
+
+                // If timed mode is active, render the countdown ticker!
+                AnimatedVisibility(visible = isTimedMode) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "⏱️ THRILLER COUNTDOWN:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (timeLeft <= 4) IncorrectRed else GoldSecondary,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                text = "${timeLeft}s",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (timeLeft <= 4) IncorrectRed else GoldPrimary,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x22FFFFFF))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(timeLeft / 15f)
+                                    .clip(CircleShape)
+                                    .background(if (timeLeft <= 4) IncorrectRed else GoldPrimary)
+                            )
+                        }
+                    }
                 }
             }
         },

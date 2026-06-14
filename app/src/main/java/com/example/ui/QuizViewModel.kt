@@ -9,6 +9,8 @@ import com.example.data.QuizDatabase
 import com.example.data.QuizRepository
 import com.example.data.QuizScoreEntity
 import com.example.data.UnlockedBadgeEntity
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -83,6 +85,46 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
     private val _isPaused = MutableStateFlow(false)
     val isPaused: StateFlow<Boolean> = _isPaused.asStateFlow()
 
+    // Interactive Timed Mode (Thriller Rush) states
+    private val _isTimedMode = MutableStateFlow(false)
+    val isTimedMode: StateFlow<Boolean> = _isTimedMode.asStateFlow()
+
+    private val _timeLeft = MutableStateFlow(15)
+    val timeLeft: StateFlow<Int> = _timeLeft.asStateFlow()
+
+    private var timerJob: Job? = null
+
+    fun setTimedMode(enabled: Boolean) {
+        _isTimedMode.value = enabled
+    }
+
+    private fun startTimer() {
+        timerJob?.cancel()
+        if (!_isTimedMode.value) return
+        _timeLeft.value = 15
+        timerJob = viewModelScope.launch {
+            while (_timeLeft.value > 0) {
+                delay(1000)
+                if (_isPaused.value || _quizCompleted.value || _answerChecked.value) {
+                    if (_answerChecked.value || _quizCompleted.value) {
+                        break
+                    }
+                    continue
+                }
+                _timeLeft.value -= 1
+            }
+            if (_timeLeft.value == 0 && !_answerChecked.value) {
+                // Time expired! Mark checked as incorrect
+                _answerChecked.value = true
+                AudioSynthesizer.playIncorrect()
+            }
+        }
+    }
+
+    private fun stopTimer() {
+        timerJob?.cancel()
+    }
+
     // Quick access helper for currently active quiz category
     val activeCategory: QuizCategory?
         get() = _selectedCategoryId.value?.let { QuizRepository.getCategoryById(it) }
@@ -106,6 +148,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         _points.value = 0
         _quizCompleted.value = false
         _isPaused.value = false
+        startTimer()
     }
 
     fun resumeSavedCategory(categoryId: String) {
@@ -120,6 +163,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
             _points.value = session.points
             _quizCompleted.value = false
             _isPaused.value = false
+            startTimer()
         } else {
             startFreshCategory(categoryId)
         }
@@ -152,6 +196,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCategoryId.value = null
         _quizCompleted.value = false
         _isPaused.value = false
+        stopTimer()
     }
 
     fun discardAndExitQuiz() {
@@ -160,6 +205,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCategoryId.value = null
         _quizCompleted.value = false
         _isPaused.value = false
+        stopTimer()
     }
 
     fun selectOption(optionIndex: Int) {
@@ -175,6 +221,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
 
         if (!_answerChecked.value) {
             _answerChecked.value = true
+            stopTimer()
             if (selected == currentQuestion.correctOptionIndex) {
                 _correctAnswersCount.value += 1
                 // Add points: base points of 100 per correct answer
@@ -194,9 +241,11 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
             _currentQuestionIndex.value = nextIndex
             _selectedOptionIndex.value = null
             _answerChecked.value = false
+            startTimer()
         } else {
             // End of quiz - Save to database
             _quizCompleted.value = true
+            stopTimer()
             AudioSynthesizer.playCelebration()
             saveQuizResult()
         }
@@ -248,6 +297,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         _quizCompleted.value = false
         _selectedOptionIndex.value = null
         _answerChecked.value = false
+        stopTimer()
     }
 
     fun resetAllData() {
