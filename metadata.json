@@ -1,0 +1,6 @@
+{
+  "name": "Michael Jackson Quiz",
+  "description": "The ultimate, highly detailed Michael Jackson Quiz App in an elegant black and gold theme. Built using Jetpack Compose and Room for high-score tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
