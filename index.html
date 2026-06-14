@@ -613,6 +613,154 @@
             width: 0%;
             transition: width 0.3s ease;
         }
+
+        /* Mobile Portrait Responsiveness */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 15px 10px;
+            }
+            header {
+                margin-bottom: 20px;
+            }
+            .gold-logo {
+                width: 70px;
+                height: 70px;
+                margin-bottom: 8px;
+            }
+            h1 {
+                font-size: 1.6rem;
+                letter-spacing: 2px;
+            }
+            .subtitle {
+                font-size: 0.8rem;
+                letter-spacing: 1px;
+            }
+            main {
+                padding: 18px;
+                border-radius: 10px;
+            }
+            .era-card {
+                padding: 16px;
+                gap: 6px;
+            }
+            .era-title {
+                font-size: 1.1rem;
+            }
+            .question-box {
+                font-size: 1rem;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            .options-list {
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            .option-btn {
+                padding: 12px 16px;
+                font-size: 0.88rem;
+            }
+            .gold-action-btn {
+                padding: 10px 20px;
+                font-size: 0.8rem;
+            }
+            .score-circle {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 15px;
+            }
+            .score-num {
+                font-size: 1.8rem;
+            }
+            .badge-unlock {
+                padding: 16px;
+                margin-bottom: 20px;
+            }
+            .badge-graphics {
+                font-size: 2.5rem;
+            }
+            .badge-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Mobile Landscape & Low-Height Responsiveness */
+        @media screen and (max-height: 600px) {
+            body {
+                padding: 10px;
+            }
+            header {
+                margin-bottom: 10px;
+                flex-direction: row;
+                gap: 12px;
+                justify-content: center;
+                align-items: center;
+            }
+            .gold-logo {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 0;
+            }
+            h1 {
+                font-size: 1.3rem;
+                margin-bottom: 0;
+                letter-spacing: 1.5px;
+            }
+            .subtitle {
+                display: none; /* Hide subtitle to preserve vital vertical real estate */
+            }
+            main {
+                padding: 15px;
+                max-width: 100%;
+            }
+            .era-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-top: 15px;
+            }
+            /* If early/80s/legacy list has an APK box below, let it take full width */
+            .companion-card {
+                margin-top: 20px;
+                padding: 14px;
+            }
+            .question-box {
+                font-size: 0.95rem;
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            .options-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            .option-btn {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+                min-height: auto;
+            }
+            .explanation-box {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            .results-box {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+                gap: 20px;
+                text-align: left;
+            }
+            .score-circle {
+                margin: 0 auto;
+            }
+            .badge-unlock {
+                margin-bottom: 0;
+                padding: 12px;
+            }
+            .badge-graphics {
+                font-size: 2rem;
+            }
+        }
     </style>
 </head>
 <body>
